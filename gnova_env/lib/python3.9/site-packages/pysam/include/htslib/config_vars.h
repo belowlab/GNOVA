@@ -1,0 +1,5 @@
+#define HTS_CC "gcc"
+#define HTS_CPPFLAGS "-I/Users/runner/work/pysam/pysam/pysam -I/Users/runner/work/pysam/pysam/htslib -I/Users/runner/work/pysam/pysam/samtools -I/Users/runner/work/pysam/pysam/samtools/lz4 -I/Users/runner/work/pysam/pysam/bcftools -I/Users/runner/work/pysam/pysam"
+#define HTS_CFLAGS "-Wno-unused-result -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -fwrapv -O3 -Wall  -g -arch x86_64  -Wno-unused -Wno-strict-prototypes -Wno-sign-compare -Wno-error=declaration-after-statement"
+#define HTS_LDFLAGS " -g -arch x86_64 -L/Users/runner/work/pysam/pysam/pysam -L/Users/runner/work/pysam/pysam -Lbuild/lib.macosx-10.9-x86_64-3.8/pysam -dynamiclib -rpath @loader_path -Wl,-headerpad_max_install_names -Wl,-install_name,@rpath/libchtslib.cpython-38-darwin.so -Wl,-x"
+#define HTS_LIBS "-lz -llzma -lbz2 -lz -lcurl"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse, os.path, sys
 from prep import prep
-from ldsc_thin import ldscore
+from ldscore import ldscore
 from calculate import calculate
 import pandas as pd
 
@@ -79,7 +79,7 @@ parser.add_argument('--use-ld', type=str,
     help='Prefix of the location to load LD score calculations from.')
 
 if __name__ == '__main__':
-    if sys.version_info[0] != 2:
-        print('ERROR: GNOVA does not run on Python 3. Please run it on Python 2.7.x.')
+    if sys.version_info[0] != 3: # 3 here means python 3
+        print('ERROR: GNOVA does not run on Python 2. Please run it on Python 3.x.')
         sys.exit(1)
     pipeline(parser.parse_args())
