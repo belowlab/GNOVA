@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from __future__ import division
+
 import collections
 from itertools import product
 import numpy as np
@@ -47,11 +47,11 @@ def calculate(gwas_snps, ld_scores, annots, N1, N2):
     p0 = len(ld_scores)
 
     S = np.empty([num_annotations, num_annotations])
-    for i, j in product(range(num_annotations), range(num_annotations)):
+    for i, j in product(list(range(num_annotations)), list(range(num_annotations))):
         S[i][j] = np.sum(ld_scores[annot.iloc[:,i] == 1].iloc[:,j]) / (P[i] * P[j])
 
     W = np.empty([num_annotations, num_annotations])
-    for i, j in product(range(num_annotations), range(num_annotations)):
+    for i, j in product(list(range(num_annotations)), list(range(num_annotations))):
         W[i][j] = np.sum((annot.iloc[:,i]==1) & (annot.iloc[:,j]==1)) / np.sum(annot.iloc[:,j] == 1)
 
     # Calculate heritability

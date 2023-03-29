@@ -12,7 +12,7 @@ def allign_alleles(df):
     alleles = []
     for colname in ['A1_x', 'A2_x', 'A1_y', 'A2_y']:
         tmp = np.empty(len(df[colname]), dtype=int)
-        for k, v in d.items():
+        for k, v in list(d.items()):
             tmp[np.array(df[colname]) == k] = v
         alleles.append(tmp)
     reversed_alleles = np.logical_and(alleles[0] == alleles[3],
@@ -31,7 +31,7 @@ def matched_or_reversed(df):
     a = []  # array of alleles
     for colname in ['A1_x', 'A2_x', 'A1_y', 'A2_y']:
         tmp = np.empty(len(df[colname]), dtype=int)
-        for k, v in d.items():
+        for k, v in list(d.items()):
             tmp[np.array(df[colname]) == k] = v
         a.append(tmp)
     matched_alleles = (((a[0] == a[2]) & (a[1] == a[3])) |
