@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 import argparse, os.path, sys
 from prep import prep
-from ldscore import ldscore
+from ldsc_thin import ldscore 
 from calculate import calculate
 import pandas as pd
-
-dir(ldscore)
 
 # returns whether the parent directory of path exists
 def parent_dir_exists(path):
@@ -38,14 +36,14 @@ def pipeline(args):
     if args.N2 is not None:
         N2 = args.N2
     if args.use_ld is not None:
-        print(('Loading LD scores from {}'.format(args.use_ld)))
+        print('Loading LD scores from {}'.format(args.use_ld))
         ld_scores = pd.read_csv(args.use_ld + '.csv.gz', sep=' ')
     else:
         print('Calculating LD scores...')
         ld_scores = ldscore(args.bfile, annots, gwas_snps, args.save_ld)
     print('Calculating correlation...')
     out = calculate(gwas_snps, ld_scores, annots, N1, N2)
-    print(('\nFinal results:\n{}\n'.format(out)))
+    print('\nFinal results:\n{}\n'.format(out))
     print('\nView ldsc.log for verbose output.')
     out.insert(0, 'annot_name', out.index)
     out.to_csv(args.out, sep=' ', na_rep='NA', index=False)

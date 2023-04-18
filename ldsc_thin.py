@@ -31,7 +31,7 @@ MASTHEAD += "*******************************************************************
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
-pd.set_option('precision', 4)
+pd.set_option('display.precision', 4)
 pd.set_option('max_colwidth',1000)
 np.set_printoptions(linewidth=1000)
 np.set_printoptions(precision=4)
@@ -59,7 +59,7 @@ class Logger(object):
 
     '''
     def __init__(self, fh):
-        self.log_fh = open(fh, 'wb')
+        self.log_fh = open(fh, 'wt')
 
     def log(self, msg):
         '''
@@ -85,7 +85,7 @@ def loj_bim(filter_df, array):
     merge_df.loc[:,'keep'] = True
     z = pd.merge(array.IDList, merge_df, how='left', left_on=l, right_on=r, sort=False)
     ii = z['keep'] == True
-    return np.nonzero(ii)[0]
+    return np.nonzero(ii.to_numpy())[0]
 
 
 def __filter_bim__(filter_df, array, log):
@@ -164,7 +164,7 @@ def _ldscore(bfile, annots, gwas_snps):
 
     # read genotype array
     log.log('Reading genotypes from {fname}'.format(fname=array_file))
-    geno_array = array_obj(array_file, n, array_snps, log, keep_snps=keep_snps,
+    geno_array = array_obj(array_file, n, array_snps, keep_snps=keep_snps,
         keep_indivs=keep_indivs, mafMin=None)
 
     #determine block widths
@@ -193,19 +193,19 @@ def _ldscore(bfile, annots, gwas_snps):
     # print LD Score summary
     pd.set_option('display.max_rows', 200)
     log.log('\nSummary of LD Scores')
-    t = df.ix[:,4:].describe()
-    log.log( t.ix[1:,:] )
+    t = df.iloc[:,4:].describe()
+    log.log( t.iloc[1:,:] )
 
     np.seterr(divide='ignore', invalid='ignore')  # print NaN instead of weird errors
     # print correlation matrix including all LD Scores and sample MAF
     log.log('')
     log.log('MAF/LD Score Correlation Matrix')
-    log.log( df.ix[:,4:].corr() )
+    log.log( df.iloc[:,4:].corr() )
 
     # print condition number
     if n_annot > 1: # condition number of a column vector w/ nonzero var is trivially one
         log.log('\nLD Score Matrix Condition Number')
-        cond_num = np.linalg.cond(df.ix[:,5:])
+        cond_num = np.linalg.cond(df.iloc[:,5:])
         log.log(remove_brackets(str(np.matrix(cond_num))))
         if cond_num > 10000:
             log.log('WARNING: ill-conditioned LD Score Matrix!')

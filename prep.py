@@ -56,7 +56,7 @@ def get_files(file_name):
         if os.path.isfile(file_name):
             return [file_name]
         else:
-            ValueError('No files matching {}'.format(file_name))
+            raise ValueError('No files matching {}'.format(file_name))
 
 
 def prep(bfile, annot, sumstats1, sumstats2):
