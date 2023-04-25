@@ -13,6 +13,8 @@ import ldscore.ldscore as ld
 import ldscore.parse as ps
 import numpy as np
 import pandas as pd
+import concurrent.futures
+import multiprocessing
 
 try:
     x = pd.DataFrame({'A': [1, 2, 3]})
@@ -230,20 +232,29 @@ def _ldscore(bfile, annots, gwas_snps):
     return df
 
 
-def ldscore(bfile, annots, gwas_snps, save_ld):
+def ldscore(bfile, annots, gwas_snps, save_ld, worker):
     df = None
     if '@' in bfile:
         all_dfs = []
-        for i in range(1, 23):
-            cur_bfile = bfile.replace('@', str(i))
-            if annots is None:
-                cur_annot = None
-            elif len(annots) > 1:
-                cur_annot = [annots[i - 1]]
-            else:
-                cur_annot = annots
-            all_dfs.append(_ldscore(cur_bfile, cur_annot, gwas_snps))
-            print('Computed LD scores for chromosome {}'.format(i))
+        # build the process executor outside the loop
+        # and submit in the for loop 
+        with concurrent.futures.ProcessPoolExecutor(max_workers=worker) as executor:
+            # for hodling the futures
+            future_list=[]
+
+            for i in range(1, 23):
+                cur_bfile = bfile.replace('@', str(i))
+                if annots is None:
+                    cur_annot = None
+                elif len(annots) > 1:
+                    cur_annot = [annots[i - 1]]
+                else:
+                    cur_annot = annots
+                future_list.append(executor.submit(_ldscore, cur_bfile, cur_annot, gwas_snps))
+
+            for future in concurrent.futures.as_completed(future_list):
+                all_dfs.append(future.result())
+
         df = pd.concat(all_dfs)
     else:
         df = _ldscore(bfile, annots, gwas_snps)
@@ -253,5 +264,66 @@ def ldscore(bfile, annots, gwas_snps, save_ld):
     if save_ld is not None:
         file_name = save_ld + '.csv.gz'
         print('Saving computed LD scores to {}.'.format(file_name))
-        df.to_csv(file_name, ' ', index=False, compression='gzip')
+        with pd.concat(all_dfs).to_csv(file_name, ' ', index=False, compression='gzip', chunksize=10000):
+            pass
     return df
+
+
+# def ldscore(bfile, annots, gwas_snps, save_ld):
+#     if '@' in bfile:
+#         # Define a helper function for _ldscore to be used with executor.map
+#         def _ldscore_wrapper(cur_bfile):
+#             if annots is None:
+#                 cur_annot = None
+#             elif len(annots) > 1:
+#                 cur_annot = [annots[int(cur_bfile.replace('@', '')) - 1]]
+#             else:
+#                 cur_annot = annots
+#             return _ldscore(cur_bfile, cur_annot, gwas_snps)
+
+#         # Use executor.map to submit _ldscore_wrapper with each chromosome
+#         with concurrent.futures.ThreadPoolExecutor() as executor:
+#             all_dfs = list(executor.map(_ldscore_wrapper, [bfile.replace('@', str(i)) for i in range(1, 23)]))
+#             for i, cur_df in enumerate(all_dfs, start=1):
+#                 print('Computed LD scores for chromosome {}'.format(i))
+#         df = pd.concat(all_dfs)
+#     else:
+#         df = _ldscore(bfile, annots, gwas_snps)
+
+#     numeric = df._get_numeric_data()
+#     numeric[numeric < 0] = 0
+#     if save_ld is not None:
+#         file_name = save_ld + '.csv.gz'
+#         print('Saving computed LD scores to {}.'.format(file_name))
+#         with pd.concat(all_dfs).to_csv(file_name, ' ', index=False, compression='gzip', chunksize=10000):
+#             pass
+#     return df
+
+
+
+
+# def ldscore(bfile, annots, gwas_snps, save_ld):
+#     df = None
+#     if '@' in bfile:
+#         all_dfs = []
+#         for i in range(1, 23):
+#             cur_bfile = bfile.replace('@', str(i))
+#             if annots is None:
+#                 cur_annot = None
+#             elif len(annots) > 1:
+#                 cur_annot = [annots[i - 1]]
+#             else:
+#                 cur_annot = annots
+#             all_dfs.append(_ldscore(cur_bfile, cur_annot, gwas_snps))
+#             print('Computed LD scores for chromosome {}'.format(i))
+#         df = pd.concat(all_dfs)
+#     else:
+#         df = _ldscore(bfile, annots, gwas_snps)
+
+#     numeric = df._get_numeric_data()
+#     numeric[numeric < 0] = 0
+#     if save_ld is not None:
+#         file_name = save_ld + '.csv.gz'
+#         print('Saving computed LD scores to {}.'.format(file_name))
+#         df.to_csv(file_name, ' ', index=False, compression='gzip')
+#     return df

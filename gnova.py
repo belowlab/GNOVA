@@ -40,7 +40,7 @@ def pipeline(args):
         ld_scores = pd.read_csv(args.use_ld + '.csv.gz', sep=' ')
     else:
         print('Calculating LD scores...')
-        ld_scores = ldscore(args.bfile, annots, gwas_snps, args.save_ld)
+        ld_scores = ldscore(args.bfile, annots, gwas_snps, args.save_ld, args.worker)
     print('Calculating correlation...')
     out = calculate(gwas_snps, ld_scores, annots, N1, N2)
     print('\nFinal results:\n{}\n'.format(out))
@@ -76,6 +76,8 @@ parser.add_argument('--save-ld', type=str,
          'files. If not set, then then no intermediate calculations will be saved.')
 parser.add_argument('--use-ld', type=str,
     help='Prefix of the location to load LD score calculations from.')
+parser.add_argument('--worker', type=int, default=4, 
+    help='N of cores you would like to use.')
 
 if __name__ == '__main__':
     if sys.version_info[0] != 3: # 3 here means python 3
