@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import concurrent.futures
 import multiprocessing
+from functools import reduce
 
 try:
     x = pd.DataFrame({'A': [1, 2, 3]})
