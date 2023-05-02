@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division
+
 import pandas as pd
 import numpy as np
 import itertools as it
@@ -32,16 +32,16 @@ _N_CHR = 22
 # complementary bases
 COMPLEMENT = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
 # bases
-BASES = COMPLEMENT.keys()
+BASES = list(COMPLEMENT.keys())
 # true iff strand ambiguous
 STRAND_AMBIGUOUS = {''.join(x): x[0] == COMPLEMENT[x[1]]
                     for x in it.product(BASES, BASES)
                     if x[0] != x[1]}
 # SNPS we want to keep (pairs of alleles)
-VALID_SNPS = {x for x in map(lambda y: ''.join(y), it.product(BASES, BASES))
+VALID_SNPS = {x for x in [''.join(y) for y in it.product(BASES, BASES)]
               if x[0] != x[1] and not STRAND_AMBIGUOUS[x]}
 # T iff SNP 1 has the same alleles as SNP 2 (allowing for strand or ref allele flip).
-MATCH_ALLELES = {x for x in map(lambda y: ''.join(y), it.product(VALID_SNPS, VALID_SNPS))
+MATCH_ALLELES = {x for x in [''.join(y) for y in it.product(VALID_SNPS, VALID_SNPS)]
                  # strand and ref match
                  if ((x[0] == x[2]) and (x[1] == x[3])) or
                  # ref match, strand flip
@@ -166,7 +166,7 @@ def get_cname_map(flag, default, ignore):
     clean_ignore = [clean_header(x) for x in ignore]
     cname_map = {x: flag[x] for x in flag if x not in clean_ignore}
     cname_map.update(
-        {x: default[x] for x in default if x not in clean_ignore + flag.keys()})
+        {x: default[x] for x in default if x not in clean_ignore + list(flag.keys())})
     return cname_map
 
 
@@ -261,11 +261,10 @@ def parse_dat(dat_gen, convert_colname, merge_alleles, log, args):
         sys.stdout.write('.')
         tot_snps += len(dat)
         old = len(dat)
-        dat = dat.dropna(axis=0, how="any", subset=filter(
-            lambda x: x != 'INFO', dat.columns)).reset_index(drop=True)
+        dat = dat.dropna(axis=0, how="any", subset=[x for x in dat.columns if x != 'INFO']).reset_index(drop=True)
         drops['NA'] += old - len(dat)
-        dat.columns = map(lambda x: convert_colname[x], dat.columns)
-        ii = np.array([True for i in xrange(len(dat))])
+        dat.columns = [convert_colname[x] for x in dat.columns]
+        ii = np.array([True for i in range(len(dat))])
         if args.merge_alleles:
             old = ii.sum()
             ii = dat.SNP.isin(merge_alleles.SNP)
@@ -274,7 +273,7 @@ def parse_dat(dat_gen, convert_colname, merge_alleles, log, args):
                 continue
 
             dat = dat[ii].reset_index(drop=True)
-            ii = np.array([True for i in xrange(len(dat))])
+            ii = np.array([True for i in range(len(dat))])
 
         if 'INFO' in dat.columns:
             old = ii.sum()
@@ -550,7 +549,7 @@ def munge_sumstats(args, p=True):
         if p:
             defaults = vars(parser.parse_args(''))
             opts = vars(args)
-            non_defaults = [x for x in opts.keys() if opts[x] != defaults[x]]
+            non_defaults = [x for x in list(opts.keys()) if opts[x] != defaults[x]]
             header = MASTHEAD
             header += "Call: \n"
             header += './munge_sumstats.py \\\n'
@@ -576,8 +575,8 @@ def munge_sumstats(args, p=True):
         cname_map = get_cname_map(
             flag_cnames, mod_default_cnames, ignore_cnames)
         if args.daner:
-            frq_u = filter(lambda x: x.startswith('FRQ_U_'), file_cnames)[0]
-            frq_a = filter(lambda x: x.startswith('FRQ_A_'), file_cnames)[0]
+            frq_u = [x for x in file_cnames if x.startswith('FRQ_U_')][0]
+            frq_a = [x for x in file_cnames if x.startswith('FRQ_A_')][0]
             N_cas = float(frq_a[6:])
             N_con = float(frq_u[6:])
             log.log(
@@ -618,19 +617,19 @@ def munge_sumstats(args, p=True):
             req_cols = ['SNP', 'P']
 
         for c in req_cols:
-            if c not in cname_translation.values():
+            if c not in list(cname_translation.values()):
                 raise ValueError('Could not find {C} column.'.format(C=c))
 
-        if (not args.N) and (not (args.N_cas and args.N_con)) and ('N' not in cname_translation.values()) and\
-                (any(x not in cname_translation.values() for x in ['N_CAS', 'N_CON'])):
+        if (not args.N) and (not (args.N_cas and args.N_con)) and ('N' not in list(cname_translation.values())) and\
+                (any(x not in list(cname_translation.values()) for x in ['N_CAS', 'N_CON'])):
             raise ValueError('Could not determine N.')
-        if ('N' in cname_translation.values() or all(x in cname_translation.values() for x in ['N_CAS', 'N_CON']))\
-                and 'NSTUDY' in cname_translation.values():
+        if ('N' in list(cname_translation.values()) or all(x in list(cname_translation.values()) for x in ['N_CAS', 'N_CON']))\
+                and 'NSTUDY' in list(cname_translation.values()):
             nstudy = [
                 x for x in cname_translation if cname_translation[x] == 'NSTUDY']
             for x in nstudy:
                 del cname_translation[x]
-        if not args.no_alleles and not all(x in cname_translation.values() for x in ['A1', 'A2']):
+        if not args.no_alleles and not all(x in list(cname_translation.values()) for x in ['A1', 'A2']):
             raise ValueError('Could not find A1/A2 columns.')
 
         log.log('Interpreting column names as follows:')
@@ -658,7 +657,7 @@ def munge_sumstats(args, p=True):
 
         (openfunc, compression) = get_compression(args.sumstats)
         dat_gen = pd.read_csv(args.sumstats, delim_whitespace=True, header=0, compression=compression,
-                              usecols=cname_translation.keys(), na_values=['.', 'NA'], iterator=True, chunksize=args.chunksize)
+                              usecols=list(cname_translation.keys()), na_values=['.', 'NA'], iterator=True, chunksize=args.chunksize)
 
         dat = parse_dat(dat_gen, cname_translation, merge_alleles, log, args)
         if len(dat) == 0:
